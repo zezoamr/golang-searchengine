@@ -11,8 +11,11 @@ import (
 )
 
 func main() {
-	getHtml("https://www.google.com")
+	crawlLinks := []string{"https://en.wikipedia.org/wiki/Supersampling", "https://www.google.com"}
+	links, words := crawl(crawlLinks)
+	fmt.Println(links)
 	fmt.Println(" ")
+	fmt.Println(words)
 }
 
 // getPage retrieves the HTML content from the specified URL.
@@ -97,4 +100,20 @@ func parsePage(body string) ([]string, []string, error) {
 	return parsedLinks, parsedWords, nil
 }
 
+func crawl(urls []string) ([]string, []string) {
+	var links []string
+	var words []string
+	for _, url := range urls {
+		page, err := getPage(url)
+		if err != nil {
+			log.Fatal(err)
+		}
+		tempLinks, tempWords, err := parsePage(page)
+		if err != nil {
+			log.Fatal(err)
+		}
+		links = append(links, tempLinks...)
+		words = append(words, tempWords...)
+	}
+	return links, words
 }

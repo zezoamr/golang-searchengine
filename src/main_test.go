@@ -80,3 +80,17 @@ func TestParsePage(t *testing.T) {
 	}
 }
 
+// func TestCrawl(t *testing.T) {
+// 	// Test case 1: Crawling multiple valid URLs
+// 	urls := []string{"https://google.com"}
+// 	crawl(urls)
+
+// 	// Test case 2: Crawling an empty URL list
+// 	urls = []string{}
+// 	crawl(urls)
+
+// 	// Test case 3: Crawling URLs with errors
+// 	urls = []string{"https://invalidurl"}
+// 	crawl(urls)
+// }
+// generate an endpoint for those tests
