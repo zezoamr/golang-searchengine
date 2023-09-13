@@ -3,10 +3,11 @@ package main
 import (
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 )
 
-func TestGetHtml(t *testing.T) {
+func TestGetPage(t *testing.T) {
 	// Create a test server to mock the HTTP response
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -16,7 +17,7 @@ func TestGetHtml(t *testing.T) {
 	// Test case 1: Test a valid URL
 	url := server.URL
 	expected := "<html><body><h1>Hello, World!</h1></body></html>"
-	result, err := getHtml(url)
+	result, err := getPage(url)
 	if err != nil {
 		t.Errorf("Expected: %s, but got: %s", expected, err)
 	}
@@ -27,7 +28,7 @@ func TestGetHtml(t *testing.T) {
 	// Test case 2: Test an invalid URL
 	url = "invalid-url"
 	expected = ""
-	_, err = getHtml(url)
+	_, err = getPage(url)
 	if err == nil {
 		t.Errorf("Expected: %s, but got: %s", "an error", err)
 	}
@@ -38,7 +39,7 @@ func TestGetHtml(t *testing.T) {
 	// Note: This test case assumes that the server is not running or unreachable
 	url = "http://localhost:1234"
 	expected = ""
-	_, err = getHtml(url)
+	_, err = getPage(url)
 	if err == nil {
 		t.Errorf("Expected: %s, but got: %s", "an error", err)
 	}
@@ -51,7 +52,7 @@ func TestGetHtml(t *testing.T) {
 
 	url = server.URL
 	expected = ""
-	result, err = getHtml(url)
+	result, err = getPage(url)
 	if err != nil {
 		t.Errorf("Expected: %s, but got: %s", expected, err)
 	}
@@ -59,3 +60,23 @@ func TestGetHtml(t *testing.T) {
 		t.Errorf("Expected: %s, but got: %s", expected, result)
 	}
 }
+
+func TestParsePage(t *testing.T) {
+	body := "<html><body><a href=\"link1\">Link 1</a><a href=\"link2\">Link 2</a><p>Paragraph 1</p><p>Paragraph 2</p></body></html>"
+	expectedLinks := []string{"link1", "link2"}
+	expectedWords := []string{"Paragraph 1", "Paragraph 2"}
+
+	links, words, err := parsePage(body)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	if !reflect.DeepEqual(links, expectedLinks) {
+		t.Errorf("expected links: %v, got: %v", expectedLinks, links)
+	}
+
+	if !reflect.DeepEqual(words, expectedWords) {
+		t.Errorf("expected words: %v, got: %v", expectedWords, words)
+	}
+}
+
