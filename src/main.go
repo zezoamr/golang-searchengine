@@ -83,7 +83,7 @@ func parsePage(body string) ([]string, []string, error) {
 	f = func(node *html.Node) {
 		if node.Type == html.ElementNode && node.Data == "a" {
 			for _, attr := range node.Attr {
-				if attr.Key == "href" && (strings.HasPrefix(attr.Val, "http") || strings.HasPrefix(attr.Val, "https")) {
+				if attr.Key == "href" { //&& (strings.HasPrefix(attr.Val, "http") || strings.HasPrefix(attr.Val, "https")) {
 					parsedLinks = append(parsedLinks, attr.Val)
 				}
 			}
