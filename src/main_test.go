@@ -63,10 +63,10 @@ func TestGetPage(t *testing.T) {
 
 func TestParsePage(t *testing.T) {
 	body := "<html><body><a href=\"link1\">Link 1</a><a href=\"link2\">Link 2</a><p>Paragraph 1</p><p>Paragraph 2</p></body></html>"
-	expectedLinks := []string{"link1", "link2"}
+	expectedLinks := []string{"http://example.com/link1", "http://example.com/link2"}
 	expectedWords := []string{"Paragraph 1", "Paragraph 2"}
 
-	links, words, err := parsePage(body)
+	links, words, err := parsePage("http://example.com", body)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -90,7 +90,7 @@ func TestCrawl(t *testing.T) {
 	defer server.Close()
 	urls := []string{server.URL}
 	links, words, err := crawl(urls)
-	expectedLinks := []string{"link1", "link2"}
+	expectedLinks := []string{server.URL + "/link1", server.URL + "/link2"}
 	expectedWords := []string{"Paragraph 1", "Paragraph 2"}
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)

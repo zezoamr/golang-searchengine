@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -62,10 +63,15 @@ func getPage(url string) (string, error) {
 // from it. It returns the extracted links and words as slices of strings. If there
 // is an error in parsing the HTML, it returns an empty slice for both links and words
 // and the error.
-func parsePage(body string) ([]string, []string, error) {
+func parsePage(originalURL string, body string) ([]string, []string, error) {
 	parsedLinks := []string{}
 	parsedWords := []string{}
 	doc, err := html.Parse(strings.NewReader((body)))
+	if err != nil {
+		return []string{}, []string{}, err
+	}
+
+	baseURL, err := url.Parse(originalURL)
 	if err != nil {
 		return []string{}, []string{}, err
 	}
@@ -85,8 +91,12 @@ func parsePage(body string) ([]string, []string, error) {
 	f = func(node *html.Node) {
 		if node.Type == html.ElementNode && node.Data == "a" {
 			for _, attr := range node.Attr {
-				if attr.Key == "href" { //&& (strings.HasPrefix(attr.Val, "http") || strings.HasPrefix(attr.Val, "https")) {
-					parsedLinks = append(parsedLinks, attr.Val)
+				if attr.Key == "href" {
+					resolvedURL, err := baseURL.Parse(attr.Val)
+					if err != nil {
+						continue // skip this link
+					}
+					parsedLinks = append(parsedLinks, resolvedURL.String())
 				}
 			}
 		}
@@ -111,7 +121,7 @@ func crawl(urls []string) ([]string, []string, error) {
 		if err != nil {
 			return links, words, err
 		}
-		tempLinks, tempWords, err := parsePage(page)
+		tempLinks, tempWords, err := parsePage(url, page)
 		if err != nil {
 			return links, words, err
 		}
