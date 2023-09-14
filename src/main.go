@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 
@@ -12,7 +11,7 @@ import (
 
 func main() {
 	crawlLinks := []string{"https://en.wikipedia.org/wiki/Supersampling", "https://www.google.com"}
-	links, words := crawl(crawlLinks)
+	links, words, _ := crawl(crawlLinks)
 	fmt.Println(links)
 	fmt.Println(" ")
 	fmt.Println(words)
@@ -28,6 +27,9 @@ func getPage(url string) (string, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return "", err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("status code error: %d %s", resp.StatusCode, resp.Status)
 	}
 	defer resp.Body.Close()
 
@@ -100,20 +102,21 @@ func parsePage(body string) ([]string, []string, error) {
 	return parsedLinks, parsedWords, nil
 }
 
-func crawl(urls []string) ([]string, []string) {
+func crawl(urls []string) ([]string, []string, error) {
 	var links []string
 	var words []string
+	var err error
 	for _, url := range urls {
 		page, err := getPage(url)
 		if err != nil {
-			log.Fatal(err)
+			return links, words, err
 		}
 		tempLinks, tempWords, err := parsePage(page)
 		if err != nil {
-			log.Fatal(err)
+			return links, words, err
 		}
 		links = append(links, tempLinks...)
 		words = append(words, tempWords...)
 	}
-	return links, words
+	return links, words, err
 }
