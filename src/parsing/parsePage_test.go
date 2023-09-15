@@ -12,7 +12,7 @@ import (
 // It uses the reflect.DeepEqual function to compare the slices of links and words.
 // The test fails if the links or words do not match the expected ones, or if an error is returned.
 func TestParsePage(t *testing.T) {
-	body := "<html><body><a href=\"link1\">Link 1</a><a href=\"link2\">Link 2</a><p>Paragraph 1</p><p>Paragraph 2</p></body></html>"
+	body := "<html><body><a href=\"link1\">Link 1</a><a href=\"link2\">Link 2</a><p>Paragraph 1!</p><p>this is Paragraph 2</p></body></html>"
 	expectedLinks := []string{"http://example.com/link1", "http://example.com/link2"}
 	expectedWords := []string{"Paragraph 1", "Paragraph 2"}
 
