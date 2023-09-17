@@ -13,11 +13,15 @@ import (
 //
 // The function returns a string containing the HTML content.
 func getPage(url string) (string, error) {
+	if url == "" {
+		return "", fmt.Errorf("url is empty")
+	}
 	resp, err := http.Get(url)
 	if err != nil {
 		return "", err
 	}
 	if resp.StatusCode != http.StatusOK {
+		//fmt.Printf("status code error: %d %s\n", resp.StatusCode, resp.Status)
 		return "", fmt.Errorf("status code error: %d %s", resp.StatusCode, resp.Status)
 	}
 	defer resp.Body.Close()

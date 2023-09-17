@@ -36,6 +36,7 @@ func TestGetPage(t *testing.T) {
 	if err == nil {
 		t.Errorf("Expected: %s, but got: %s", "an error", err)
 	}
+	//fmt.Println("testcase2 err ", err)
 
 	server.Close()
 
@@ -63,4 +64,17 @@ func TestGetPage(t *testing.T) {
 	if result != expected {
 		t.Errorf("Expected: %s, but got: %s", expected, result)
 	}
+
+	// Test case 5: Test a URL that returns a bad status code
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer server.Close()
+
+	url = server.URL
+	_, err = getPage(url)
+	if err == nil {
+		t.Errorf("Expected: %s, but got: %s", "status code error: 404 404 Not Found", err)
+	}
+	//fmt.Println("testcase5 err ", err)
 }
