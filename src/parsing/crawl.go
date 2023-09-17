@@ -1,10 +1,13 @@
 package parsing
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"sync"
 	"time"
+
+	"golang.org/x/sync/semaphore"
 )
 
 type Page struct {
@@ -14,19 +17,21 @@ type Page struct {
 	Err   error
 }
 
-func crawl(urls []string, MAX_PAGES_TO_BE_PARSED int, MAX_LINKS_PER_PAGE int, linksChannelLength int, parsedPagesChannelLength int) []Page {
+func crawl(urls []string, MAX_PAGES_TO_BE_PARSED int, MAX_LINKS_PER_PAGE int, channelsLength int, rateLimit int) []Page {
 
-	if len(urls) == 0 || len(urls) > linksChannelLength {
+	if len(urls) == 0 || len(urls) > channelsLength {
 		log.Fatal("number of starting URLs must be between 1 and linksChannelLength")
 	}
 
-	parsedChannel := make(chan Page, linksChannelLength)
-	linksChannel := make(chan string, parsedPagesChannelLength)
+	parsedChannel := make(chan Page, channelsLength)
+	linksChannel := make(chan string, channelsLength)
 	done := make(chan bool)
 	parsedPagesCount := 0
 	PAGES := []Page{}
 	crawledPages := make(map[string]struct{})
 	mutex := &sync.Mutex{}
+	activeRequests := int64(0)
+
 	for _, url := range urls {
 		normalizedurl, err := normalizeURL(url)
 		if err != nil {
@@ -35,19 +40,6 @@ func crawl(urls []string, MAX_PAGES_TO_BE_PARSED int, MAX_LINKS_PER_PAGE int, li
 		}
 		linksChannel <- normalizedurl
 	}
-
-	go func() {
-		for {
-			time.Sleep(1 * time.Second)
-			if len(linksChannel) == 0 {
-				log.Println("No more links to process")
-				done <- true
-				return
-			}
-			// checks if there are no more links to process. If the links channel is empty, it breaks out of the for loop.
-			// This is to prevent the program from getting stuck in an infinite loop if there are not enough links to reach MAX_PAGES_TO_BE_PARSED.
-		}
-	}()
 
 	go func() {
 		for tempPage := range parsedChannel {
@@ -62,12 +54,14 @@ func crawl(urls []string, MAX_PAGES_TO_BE_PARSED int, MAX_LINKS_PER_PAGE int, li
 				crawledPages[normalizedLink] = struct{}{}
 				PAGES = append(PAGES, tempPage)
 				parsedPagesCount++
+				activeRequests--
 				mutex.Unlock()
 
 				log.Println("finished crawling a page", tempPage.Url)
 
 				if parsedPagesCount > MAX_PAGES_TO_BE_PARSED {
 					done <- true
+					return
 				}
 
 				count := 0
@@ -92,10 +86,32 @@ func crawl(urls []string, MAX_PAGES_TO_BE_PARSED int, MAX_LINKS_PER_PAGE int, li
 		}
 	}()
 
+	sem := semaphore.NewWeighted(int64(rateLimit))
+
 	go func() {
 		for link := range linksChannel {
-			fmt.Println("crawling a new link", link)
-			go crawlPage(link, parsedChannel)
+			if err := sem.Acquire(context.Background(), 1); err != nil {
+				log.Printf("Failed to acquire semaphore: %v", err)
+				continue
+			}
+			go func(link string) {
+				defer sem.Release(1)
+				fmt.Println("crawling a new link", link)
+				activeRequests++
+				crawlPage(link, parsedChannel)
+			}(link)
+		}
+	}()
+
+	go func() {
+		for {
+			time.Sleep(1 * time.Second)
+			if len(linksChannel) == 0 && activeRequests == 0 {
+				log.Println("No more links to process")
+				done <- true
+				return
+			}
+			// Check if there are no more links to process and no more active requests. to avoid when there is no more links to be parsed while still lessen than MAX_PAGES_TO_BE_PARSED
 		}
 	}()
 
