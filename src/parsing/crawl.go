@@ -3,6 +3,7 @@ package parsing
 import (
 	"fmt"
 	"log"
+	"sync"
 	"time"
 )
 
@@ -25,6 +26,7 @@ func crawl(urls []string, MAX_PAGES_TO_BE_PARSED int, MAX_LINKS_PER_PAGE int, li
 	parsedPagesCount := 0
 	PAGES := []Page{}
 	crawledPages := make(map[string]struct{})
+	mutex := &sync.Mutex{}
 	for _, url := range urls {
 		linksChannel <- url
 	}
@@ -47,9 +49,12 @@ func crawl(urls []string, MAX_PAGES_TO_BE_PARSED int, MAX_LINKS_PER_PAGE int, li
 			go func(tempPage Page) {
 				log.Println("finished crawling a page", tempPage.Url)
 
+				mutex.Lock()
 				crawledPages[tempPage.Url] = struct{}{}
 				PAGES = append(PAGES, tempPage)
 				parsedPagesCount++
+				mutex.Unlock()
+
 				if parsedPagesCount > MAX_PAGES_TO_BE_PARSED {
 					done <- true
 				}
@@ -66,7 +71,10 @@ func crawl(urls []string, MAX_PAGES_TO_BE_PARSED int, MAX_LINKS_PER_PAGE int, li
 
 	go func() {
 		for link := range linksChannel {
-			if _, ok := crawledPages[link]; !ok {
+			mutex.Lock()
+			_, ok := crawledPages[link]
+			mutex.Unlock()
+			if !ok {
 				fmt.Println("crawling a new link", link)
 				go crawlPage(link, parsedChannel)
 			}
