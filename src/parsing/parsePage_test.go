@@ -7,14 +7,15 @@ import (
 
 // TestParsePage is a unit test for the parsePage function.
 //
-// It tests the functionality of the parsePage function by providing a sample HTML body and expected results.
-// The function checks if the parsed links and words match the expected ones, and if any error is returned.
-// It uses the reflect.DeepEqual function to compare the slices of links and words.
-// The test fails if the links or words do not match the expected ones, or if an error is returned.
+// It tests the functionality of the parsePage function by providing a sample HTML body
+// and comparing the extracted links and words with the expected values.
+// The function takes a testing.T object as a parameter, which allows it to report any
+// unexpected errors during the test execution.
+// The function does not return any values.
 func TestParsePage(t *testing.T) {
 	body := "<html><body><a href=\"link1\">Link 1</a><a href=\"link2\">Link 2</a><p>Paragraph 1!</p><p>this is Paragraph 2</p></body></html>"
 	expectedLinks := []string{"http://example.com/link1", "http://example.com/link2"}
-	expectedWords := []string{"Paragraph 1", "Paragraph 2"}
+	expectedWords := "Paragraph 1 Paragraph 2"
 
 	links, words, err := parsePage("http://example.com", body)
 	if err != nil {

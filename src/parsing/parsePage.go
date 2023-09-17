@@ -7,23 +7,27 @@ import (
 	"golang.org/x/net/html"
 )
 
-// parsePage takes a string as input and returns two slices of strings and an error.
+// parsePage parses the given page and extracts the links and words from it.
 //
-// The function parses the given string as HTML and extracts all the links and words
-// from it. It returns the extracted links and words as slices of strings. If there
-// is an error in parsing the HTML, it returns an empty slice for both links and words
-// and the error.
-func parsePage(originalURL string, body string) ([]string, []string, error) {
+// Parameters:
+// - originalURL: the original URL of the page to parse (string).
+// - body: the body of the page to parse (string).
+//
+// Returns:
+// - parsedLinks: a slice of strings containing the parsed links from the page ([]string).
+// - parsedWords: a string containing the parsed words from the page.
+// - error: an error object if any error occurs during the parsing process.
+func parsePage(originalURL string, body string) ([]string, string, error) {
 	parsedLinks := []string{}
-	parsedWords := []string{}
+	var parsedWords strings.Builder
 	doc, err := html.Parse(strings.NewReader((body)))
 	if err != nil {
-		return []string{}, []string{}, err
+		return []string{}, "", err
 	}
 
 	baseURL, err := url.Parse(originalURL)
 	if err != nil {
-		return []string{}, []string{}, err
+		return []string{}, "", err
 	}
 
 	filterTags := map[string]bool{ // extract the variable outside so it doesn't get created every time
@@ -52,7 +56,8 @@ func parsePage(originalURL string, body string) ([]string, []string, error) {
 		}
 		if node.Type == html.TextNode && (node.Parent == nil || !filterTags[node.Parent.Data]) {
 			if strings.TrimSpace(node.Data) != "" {
-				parsedWords = append(parsedWords, cleanText(strings.TrimSpace(node.Data)))
+				parsedWords.WriteString(cleanText(strings.TrimSpace(node.Data)))
+				parsedWords.WriteString(" ")
 			}
 		}
 		for c := node.FirstChild; c != nil; c = c.NextSibling {
@@ -61,5 +66,5 @@ func parsePage(originalURL string, body string) ([]string, []string, error) {
 	}
 	f(doc)
 
-	return parsedLinks, parsedWords, nil
+	return parsedLinks, strings.TrimSpace(parsedWords.String()), nil
 }
