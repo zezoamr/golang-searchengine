@@ -28,7 +28,12 @@ func crawl(urls []string, MAX_PAGES_TO_BE_PARSED int, MAX_LINKS_PER_PAGE int, li
 	crawledPages := make(map[string]struct{})
 	mutex := &sync.Mutex{}
 	for _, url := range urls {
-		linksChannel <- url
+		normalizedurl, err := normalizeURL(url)
+		if err != nil {
+			log.Println("Error normalizing URL:", err)
+			continue
+		}
+		linksChannel <- normalizedurl
 	}
 
 	go func() {
@@ -47,23 +52,41 @@ func crawl(urls []string, MAX_PAGES_TO_BE_PARSED int, MAX_LINKS_PER_PAGE int, li
 	go func() {
 		for tempPage := range parsedChannel {
 			go func(tempPage Page) {
-				log.Println("finished crawling a page", tempPage.Url)
+
+				normalizedLink, err := normalizeURL(tempPage.Url)
+				if err != nil {
+					normalizedLink = tempPage.Url
+				}
 
 				mutex.Lock()
-				crawledPages[tempPage.Url] = struct{}{}
+				crawledPages[normalizedLink] = struct{}{}
 				PAGES = append(PAGES, tempPage)
 				parsedPagesCount++
 				mutex.Unlock()
+
+				log.Println("finished crawling a page", tempPage.Url)
 
 				if parsedPagesCount > MAX_PAGES_TO_BE_PARSED {
 					done <- true
 				}
 
-				for i, link := range tempPage.Links {
-					if i == MAX_LINKS_PER_PAGE {
+				count := 0
+				for _, link := range tempPage.Links {
+					if count == MAX_LINKS_PER_PAGE {
 						break
 					}
-					linksChannel <- link
+					normalizedLink, err := normalizeURL(link)
+					if err != nil {
+						log.Println("Error normalizing URL:", err)
+						continue
+					}
+					mutex.Lock()
+					_, ok := crawledPages[link]
+					mutex.Unlock()
+					if !ok {
+						count++
+						linksChannel <- normalizedLink
+					}
 				}
 			}(tempPage)
 		}
@@ -71,13 +94,8 @@ func crawl(urls []string, MAX_PAGES_TO_BE_PARSED int, MAX_LINKS_PER_PAGE int, li
 
 	go func() {
 		for link := range linksChannel {
-			mutex.Lock()
-			_, ok := crawledPages[link]
-			mutex.Unlock()
-			if !ok {
-				fmt.Println("crawling a new link", link)
-				go crawlPage(link, parsedChannel)
-			}
+			fmt.Println("crawling a new link", link)
+			go crawlPage(link, parsedChannel)
 		}
 	}()
 
