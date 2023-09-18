@@ -29,7 +29,7 @@ func crawl(urls []string, MAX_PAGES_TO_BE_PARSED int, MAX_LINKS_PER_PAGE int, ch
 	parsedPagesCount := 0
 	PAGES := []Page{}
 	crawledPages := make(map[string]struct{})
-	mutex := &sync.Mutex{}
+	mutex := &sync.RWMutex{}
 	activeRequests := int64(0)
 
 	for _, url := range urls {
@@ -74,9 +74,9 @@ func crawl(urls []string, MAX_PAGES_TO_BE_PARSED int, MAX_LINKS_PER_PAGE int, ch
 						log.Println("Error normalizing URL:", err)
 						continue
 					}
-					mutex.Lock()
+					mutex.RLock()
 					_, ok := crawledPages[link]
-					mutex.Unlock()
+					mutex.RUnlock()
 					if !ok {
 						count++
 						linksChannel <- normalizedLink
