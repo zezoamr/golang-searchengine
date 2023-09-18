@@ -1,9 +1,11 @@
 package parsing
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
 
 // getPage retrieves the HTML content from the specified URL.
@@ -16,7 +18,15 @@ func getPage(url string) (string, error) {
 	if url == "" {
 		return "", fmt.Errorf("url is empty")
 	}
-	resp, err := http.Get(url)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return "", err
 	}
