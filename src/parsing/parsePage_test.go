@@ -15,7 +15,7 @@ import (
 func TestParsePage(t *testing.T) {
 	body := "<html><body><a href=\"link1\">Link 1</a><a href=\"link2\">Link 2</a><p>Paragraph 1!</p><p>this is Paragraph 2</p></body></html>"
 	expectedLinks := []string{"http://example.com/link1", "http://example.com/link2"}
-	expectedWords := "Paragraph 1 Paragraph 2"
+	expectedWords := "paragraph 1 paragraph 2"
 
 	links, words, err := parsePage("http://example.com", body)
 	if err != nil {

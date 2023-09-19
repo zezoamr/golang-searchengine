@@ -16,7 +16,7 @@ func TestCleanText(t *testing.T) {
 		{
 			name:     "String with useless words and punctuation",
 			input:    "Hello, world! This is a test.",
-			expected: "Hello world test",
+			expected: "hello world test",
 		},
 		{
 			name:     "String with only punctuation",
@@ -31,7 +31,7 @@ func TestCleanText(t *testing.T) {
 		{
 			name:     "String with no useless words or punctuation",
 			input:    "Hello world",
-			expected: "Hello world",
+			expected: "hello world",
 		},
 	}
 

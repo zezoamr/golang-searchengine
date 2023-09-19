@@ -56,7 +56,7 @@ func parsePage(originalURL string, body string) ([]string, string, error) {
 		}
 		if node.Type == html.TextNode && (node.Parent == nil || !filterTags[node.Parent.Data]) {
 			if strings.TrimSpace(node.Data) != "" {
-				parsedWords.WriteString(cleanText(strings.TrimSpace(node.Data)))
+				parsedWords.WriteString(cleanText(node.Data))
 				parsedWords.WriteString(" ")
 			}
 		}

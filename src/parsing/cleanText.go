@@ -30,7 +30,7 @@ var uselessWords = map[string]struct{}{
 }
 
 func cleanText(text string) string {
-	return removeUselessWords(removePunctuation(text))
+	return strings.ToLower((strings.TrimSpace(removeUselessWords(removePunctuation(text)))))
 }
 
 func removeUselessWords(text string) string {
