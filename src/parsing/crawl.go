@@ -14,7 +14,7 @@ type Page struct {
 	Url   string   `json:"url"`
 	Links []string `json:"links"`
 	Words string   `json:"words"`
-	Err   error    `json:"err"`
+	Err   error    `json:"-"`
 }
 
 func crawl(urls []string, MAX_PAGES_TO_BE_PARSED int, MAX_LINKS_PER_PAGE int, channelsLength int, rateLimit int) []Page {
