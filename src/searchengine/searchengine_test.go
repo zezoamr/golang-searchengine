@@ -15,6 +15,10 @@ func TestCrawlPage(t *testing.T) {
 		t.Fatal(err)
 	}
 	deleteIndex(typedClient, "test")
+	// if test index does not exist it won't return an error
+	// if it exists it cleans it for the test and thus we are indeed testing it
+	// (if this fails and test index exisits below will return an err)
+	// by cleaning up when starting and not defering it we are avoiding crashes preventing the cleaning of the index for the subsquent tests
 	err = createIndex(typedClient, "test")
 	if err != nil {
 		t.Fatal(err)
@@ -68,6 +72,18 @@ func TestCrawlPage(t *testing.T) {
 	t.Logf(string(body))
 
 	resp, err = search(client, "test", "google", 3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	body, err = io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf(string(body))
+
+	resp, err = search(client, "test", "gogle", 2) //testing fuziness
 	if err != nil {
 		t.Fatal(err)
 	}
