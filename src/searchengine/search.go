@@ -11,7 +11,7 @@ import (
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 )
 
-func search(typedClient *elasticsearch.Client, index string, searchword string, count int) (*esapi.Response, error) {
+func search(client *elasticsearch.Client, index string, searchword string, count int) (*esapi.Response, error) {
 	var buf strings.Builder
 	query := map[string]interface{}{
 		"query": map[string]interface{}{
@@ -29,12 +29,12 @@ func search(typedClient *elasticsearch.Client, index string, searchword string, 
 		return nil, err
 	}
 
-	res, err := typedClient.Search(
-		typedClient.Search.WithContext(context.Background()),
-		typedClient.Search.WithIndex(index),
-		typedClient.Search.WithBody(bytes.NewReader([]byte(buf.String()))),
-		typedClient.Search.WithTrackTotalHits(true),
-		typedClient.Search.WithPretty(),
+	res, err := client.Search(
+		client.Search.WithContext(context.Background()),
+		client.Search.WithIndex(index),
+		client.Search.WithBody(bytes.NewReader([]byte(buf.String()))),
+		client.Search.WithTrackTotalHits(true),
+		client.Search.WithPretty(),
 	)
 	if err != nil {
 		log.Printf("Error getting response: %s", err)
