@@ -14,8 +14,8 @@ func CreateIndex(typedClient *elasticsearch.TypedClient, index string) error {
 	return createIndex(typedClient, index)
 }
 
-func DeleteIndex(typedClient *elasticsearch.TypedClient, index string) {
-	deleteIndex(typedClient, index)
+func DeleteIndex(typedClient *elasticsearch.TypedClient, index string) error {
+	return deleteIndex(typedClient, index)
 }
 
 func Search(typedClient *elasticsearch.Client, index string, searchword string, count int) (*esapi.Response, error) {
