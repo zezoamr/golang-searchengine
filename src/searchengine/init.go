@@ -16,7 +16,7 @@ import (
 func getClient() (*elasticsearch.TypedClient, *elasticsearch.Client, error) {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatal("Error loading .env file: ", err)
 		return nil, nil, err
 	}
 
@@ -55,7 +55,12 @@ func createIndex(typedClient *elasticsearch.TypedClient, index string) error {
 	return nil
 }
 
-func deleteIndex(typedClient *elasticsearch.TypedClient, index string) {
-	typedClient.Indices.Delete(index).Do(context.TODO())
+func deleteIndex(typedClient *elasticsearch.TypedClient, index string) error {
+	_, err := typedClient.Indices.Delete(index).Do(context.TODO())
+	if err != nil {
+		log.Printf("Failure indexing batch: %s", err)
+		return err
+	}
 	log.Printf("successfully deleted index: %s", index)
+	return nil
 }
